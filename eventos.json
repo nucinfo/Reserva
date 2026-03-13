@@ -14,5 +14,13 @@
 "evento":"Treinamento TI",
 "solicitante":"Maria",
 "repetir":"sim"
+},
+{
+"data":"2026-03-20",
+"hora":"14:00",
+"sala":"Sala 3",
+"evento":"Aula de Redes",
+"solicitante":"Carlos",
+"repetir":"nao"
 }
 ]
