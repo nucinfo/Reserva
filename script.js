@@ -1,96 +1,51 @@
-<<<<<<< HEAD
-async function carregarEventos(){
-
-let res = await fetch("eventos.json")
-let eventos = await res.json()
-
-let agenda = document.getElementById("agenda")
-agenda.innerHTML=""
-
-let agora = new Date()
-
-eventos.forEach(e=>{
-
-let horaEvento = new Date(e.data+" "+e.hora)
-
-let div = document.createElement("div")
-div.className="evento"
-
-let diff = (horaEvento-agora)/60000
-
-if(diff <=5 && diff >0){
-div.classList.add("proximo")
-document.getElementById("alerta").play()
+body{
+background:#0a0a0a;
+color:#fff;
+font-family:Segoe UI;
+margin:0;
 }
 
-if(diff <=0 && diff >=-60){
-div.classList.add("agora")
+.topo{
+display:flex;
+justify-content:space-between;
+align-items:center;
+padding:20px;
+background:#111;
+border-bottom:3px solid #333;
 }
 
-if(diff<-60 && e.repetir=="nao"){
-return
+h1{
+font-size:40px;
 }
 
-div.innerHTML=
-`
-${e.hora} | ${e.sala} <br>
-${e.evento}<br>
-Solicitante: ${e.solicitante}
-`
-
-agenda.appendChild(div)
-
-})
-
+#relogio{
+font-size:40px;
+font-weight:bold;
 }
 
-setInterval(carregarEventos,30000)
-=======
-async function carregarEventos(){
-
-let res = await fetch("eventos.json")
-let eventos = await res.json()
-
-let agenda = document.getElementById("agenda")
-agenda.innerHTML=""
-
-let agora = new Date()
-
-eventos.forEach(e=>{
-
-let horaEvento = new Date(e.data+" "+e.hora)
-
-let div = document.createElement("div")
-div.className="evento"
-
-let diff = (horaEvento-agora)/60000
-
-if(diff <=5 && diff >0){
-div.classList.add("proximo")
-document.getElementById("alerta").play()
+#agenda{
+padding:20px;
 }
 
-if(diff <=0 && diff >=-60){
-div.classList.add("agora")
+.evento{
+display:grid;
+grid-template-columns:150px 150px 1fr 200px;
+padding:15px;
+font-size:28px;
+border-bottom:1px solid #333;
 }
 
-if(diff<-60 && e.repetir=="nao"){
-return
+.proximo{
+background:#ff9800;
 }
 
-div.innerHTML=
-`
-${e.hora} | ${e.sala} <br>
-${e.evento}<br>
-Solicitante: ${e.solicitante}
-`
-
-agenda.appendChild(div)
-
-})
-
+.agora{
+background:#e53935;
+animation:piscando 1s infinite;
 }
 
-setInterval(carregarEventos,30000)
->>>>>>> 10694d548421d970bb47a4c548a41890ac900e1a
-carregarEventos()
+@keyframes piscando{
+0%{opacity:1}
+50%{opacity:0.4}
+100%{opacity:1}
+}
