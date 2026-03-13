@@ -1,66 +1,51 @@
-<<<<<<< HEAD
 body{
-    background:#000;
-    color:#fff;
-    font-family:Arial;
-    text-align:center;
+background:#0a0a0a;
+color:#fff;
+font-family:Segoe UI;
+margin:0;
+}
+
+.topo{
+display:flex;
+justify-content:space-between;
+align-items:center;
+padding:20px;
+background:#111;
+border-bottom:3px solid #333;
 }
 
 h1{
-    font-size:50px;
-    margin:20px;
+font-size:40px;
+}
+
+#relogio{
+font-size:40px;
+font-weight:bold;
+}
+
+#agenda{
+padding:20px;
 }
 
 .evento{
-    font-size:30px;
-    padding:15px;
-    border-bottom:1px solid #444;
+display:grid;
+grid-template-columns:150px 150px 1fr 200px;
+padding:15px;
+font-size:28px;
+border-bottom:1px solid #333;
 }
 
 .proximo{
-    background:orange;
+background:#ff9800;
 }
 
 .agora{
-    background:red;
-    animation:piscando 1s infinite;
+background:#e53935;
+animation:piscando 1s infinite;
 }
 
 @keyframes piscando{
-    0%{opacity:1}
-    50%{opacity:0.4}
-    100%{opacity:1}
-=======
-body{
-    background:#000;
-    color:#fff;
-    font-family:Arial;
-    text-align:center;
-}
-
-h1{
-    font-size:50px;
-    margin:20px;
-}
-
-.evento{
-    font-size:30px;
-    padding:15px;
-    border-bottom:1px solid #444;
-}
-
-.proximo{
-    background:orange;
-}
-
-.agora{
-    background:red;
-    animation:piscando 1s infinite;
-}
-
-@keyframes piscando{
-    0%{opacity:1}
-    50%{opacity:0.4}
-    100%{opacity:1}
->>>>>>> 10694d548421d970bb47a4c548a41890ac900e1a
+0%{opacity:1}
+50%{opacity:0.4}
+100%{opacity:1}
 }
