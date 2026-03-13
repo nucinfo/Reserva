@@ -1,7 +1,7 @@
 body{
 background:#0a0a0a;
 color:#fff;
-font-family:Segoe UI;
+font-family:Segoe UI, Arial;
 margin:0;
 }
 
@@ -16,6 +16,7 @@ border-bottom:3px solid #333;
 
 h1{
 font-size:40px;
+margin:0;
 }
 
 #relogio{
@@ -37,6 +38,7 @@ border-bottom:1px solid #333;
 
 .proximo{
 background:#ff9800;
+color:#000;
 }
 
 .agora{
@@ -46,6 +48,6 @@ animation:piscando 1s infinite;
 
 @keyframes piscando{
 0%{opacity:1}
-50%{opacity:0.4}
+50%{opacity:0.5}
 100%{opacity:1}
 }
