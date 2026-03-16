@@ -94,6 +94,11 @@ h1{
   animation:piscando 1.1s infinite;
 }
 
+.passado{
+  opacity:.62;
+  filter:saturate(.75);
+}
+
 @keyframes piscando{
   0%{filter:saturate(1); transform:translateY(0)}
   50%{filter:saturate(1.2); transform:translateY(-1px)}

@@ -7,6 +7,8 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
 import { db } from "./firebase.js";
 
+const HIDE_PAST_MINUTES = -24 * 60; // mostra até 24h no passado
+
 function startClock() {
   const el = document.getElementById("relogio");
   if (!el) return;
@@ -29,8 +31,8 @@ function renderEventoDiv(e, agora) {
 
   const diffMin = (startAt - agora) / 60000;
 
-  // Esconde eventos muito antigos (se não repetir)
-  if (diffMin < -60 && e.repetir === "nao") return null;
+  // Esconde só eventos MUITO antigos (evita poluir a tela)
+  if (diffMin < HIDE_PAST_MINUTES && e.repetir === "nao") return null;
 
   const div = document.createElement("div");
   div.className = "evento";
@@ -43,6 +45,10 @@ function renderEventoDiv(e, agora) {
 
   if (diffMin <= 0 && diffMin >= -60) {
     div.classList.add("agora");
+  }
+
+  if (diffMin < -60) {
+    div.classList.add("passado");
   }
 
   div.innerHTML = `
