@@ -8,6 +8,7 @@ import {
 import { db } from "./firebase.js";
 
 const HIDE_PAST_MINUTES = -24 * 60; // mostra até 24h no passado
+const FUTURE_DAYS = 30; // janela para materializar eventos semanais
 
 function startClock() {
   const el = document.getElementById("relogio");
@@ -21,6 +22,57 @@ function toLocalDateTimeISO(dateStr, timeStr) {
   // dateStr: YYYY-MM-DD, timeStr: HH:MM
   // Interpreta como horário local do navegador.
   return `${dateStr}T${timeStr}:00`;
+}
+
+function yyyyMmDd(d) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+function addDays(d, days) {
+  const x = new Date(d);
+  x.setDate(x.getDate() + days);
+  return x;
+}
+
+function weeklyOccurrences(e, now) {
+  // e: { diaSemana, hora, repetirAte, ... }
+  const end = new Date(`${e.repetirAte}T23:59:59`);
+  const windowStart = addDays(now, Math.floor(HIDE_PAST_MINUTES / (60 * 24)));
+  const windowEnd = addDays(now, FUTURE_DAYS);
+
+  const start = windowStart > new Date(0) ? windowStart : now;
+  const until = end < windowEnd ? end : windowEnd;
+  if (!(until instanceof Date) || Number.isNaN(until.getTime())) return [];
+
+  const targetDow = Number(e.diaSemana);
+  if (Number.isNaN(targetDow)) return [];
+
+  // achar a próxima ocorrência a partir de windowStart
+  const cursor = new Date(start);
+  cursor.setHours(0, 0, 0, 0);
+  const delta = (targetDow - cursor.getDay() + 7) % 7;
+  cursor.setDate(cursor.getDate() + delta);
+
+  const out = [];
+  for (let guard = 0; guard < 400; guard++) {
+    const dayStr = yyyyMmDd(cursor);
+    const startAt = new Date(toLocalDateTimeISO(dayStr, e.hora));
+    if (startAt > until) break;
+    if (startAt >= addDays(now, -2)) {
+      out.push({
+        ...e,
+        tipo: "data",
+        data: dayStr,
+        startAt: Timestamp.fromDate(startAt),
+      });
+    }
+    cursor.setDate(cursor.getDate() + 7);
+  }
+
+  return out;
 }
 
 function renderEventoDiv(e, agora) {
@@ -87,15 +139,38 @@ function startRealtimeAgenda() {
 
   // Firestore: coleção "eventos" ordenada por startAt
   const eventosRef = collection(db, "eventos");
-  const q = query(eventosRef, orderBy("startAt", "asc"));
+  // Não dá para ordenar semanal e data no mesmo campo, então busca e ordena no cliente.
+  const q = query(eventosRef);
 
   onSnapshot(
     q,
     (snap) => {
       agenda.innerHTML = "";
       const agora = new Date();
+
+      const items = [];
       snap.forEach((doc) => {
         const e = doc.data();
+        if (e?.tipo === "semanal") {
+          items.push(...weeklyOccurrences(e, agora));
+        } else {
+          items.push(e);
+        }
+      });
+
+      items.sort((a, b) => {
+        const da =
+          a.startAt && typeof a.startAt.toDate === "function"
+            ? a.startAt.toDate()
+            : new Date(toLocalDateTimeISO(a.data, a.hora));
+        const db =
+          b.startAt && typeof b.startAt.toDate === "function"
+            ? b.startAt.toDate()
+            : new Date(toLocalDateTimeISO(b.data, b.hora));
+        return da - db;
+      });
+
+      items.forEach((e) => {
         const div = renderEventoDiv(e, agora);
         if (div) agenda.appendChild(div);
       });
