@@ -1,78 +1,58 @@
-<<<<<<< HEAD
 <!DOCTYPE html>
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Cadastrar Evento</title>
+<title>Admin Eventos</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
-<h2>Novo Evento</h2>
+<main class="page">
+  <div class="card">
+    <h2 class="page-title">Novo Evento</h2>
 
-<form>
+    <form id="form" class="form">
+      <label class="field">
+        <span class="label">Data</span>
+        <input type="date" id="data" required>
+      </label>
 
-Data
-<input type="date"><br>
+      <label class="field">
+        <span class="label">Hora</span>
+        <input type="time" id="hora" required>
+      </label>
 
-Hora
-<input type="time"><br>
+      <label class="field">
+        <span class="label">Sala</span>
+        <input type="text" id="sala" placeholder="Ex.: Sala 01" required>
+      </label>
 
-Sala
-<input type="text"><br>
+      <label class="field">
+        <span class="label">Evento</span>
+        <input type="text" id="evento" placeholder="Ex.: Reunião" required>
+      </label>
 
-Evento
-<input type="text"><br>
+      <label class="field">
+        <span class="label">Solicitante</span>
+        <input type="text" id="solicitante" placeholder="Nome / setor" required>
+      </label>
 
-Solicitante
-<input type="text"><br>
+      <label class="field">
+        <span class="label">Repetir</span>
+        <select id="repetir">
+          <option value="nao">Não</option>
+          <option value="sim">Sim</option>
+        </select>
+      </label>
 
-Repetir
-<select>
-<option>nao</option>
-<option>sim</option>
-</select>
-
-</form>
-
-</body>
-=======
-<!DOCTYPE html>
-<html>
-<head>
-<meta charset="UTF-8">
-<title>Cadastrar Evento</title>
-</head>
-
-<body>
-
-<h2>Novo Evento</h2>
-
-<form>
-
-Data
-<input type="date"><br>
-
-Hora
-<input type="time"><br>
-
-Sala
-<input type="text"><br>
-
-Evento
-<input type="text"><br>
-
-Solicitante
-<input type="text"><br>
-
-Repetir
-<select>
-<option>nao</option>
-<option>sim</option>
-</select>
-
-</form>
+      <div class="actions">
+        <button class="btn btn-primary" type="submit">Salvar</button>
+      </div>
+    </form>
+  </div>
+</main>
 
 </body>
->>>>>>> 10694d548421d970bb47a4c548a41890ac900e1a
 </html>
