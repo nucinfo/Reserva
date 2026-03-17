@@ -9,10 +9,30 @@ async function carregarEventos() {
   const agora = new Date();
 
   eventos.forEach((e) => {
-    const dataHora = new Date(e.data + " " + e.hora);
+    let dataHora;
+    if (e.semanal === true && typeof e.dia === "number") {
+      // Evento semanal: calcular próxima ocorrência
+      const hoje = agora;
+      const diaSemanaHoje = hoje.getDay();
+      const delta = (e.dia - diaSemanaHoje + 7) % 7;
+      const proxData = new Date(hoje);
+      proxData.setDate(hoje.getDate() + delta);
+      proxData.setHours(Number(e.hora.split(":")[0]), Number(e.hora.split(":")[1]), 0, 0);
+      dataHora = proxData;
+    } else {
+      // Evento por data
+      dataHora = e.data instanceof Object && typeof e.data.toDate === "function"
+        ? e.data.toDate()
+        : new Date(e.data);
+      if (e.hora) {
+        const [h, m] = e.hora.split(":");
+        dataHora.setHours(Number(h), Number(m), 0, 0);
+      }
+    }
+
     const diff = (dataHora - agora) / 60000;
 
-    if (diff < -60 && e.repetir === "nao") return;
+    if (diff < -60 && e.semanal !== true) return;
 
     const div = document.createElement("div");
     div.className = "evento";
@@ -27,11 +47,10 @@ async function carregarEventos() {
       div.classList.add("agora");
     }
 
-    // Mantém compatível com o CSS atual (4 colunas) e com versões antigas (texto simples)
     div.innerHTML = `
       <div>${e.hora}</div>
       <div>${e.sala}</div>
-      <div>${e.evento}</div>
+      <div>${e.titulo ?? ""}</div>
       <div>${e.solicitante ?? ""}</div>
     `;
 

@@ -38,8 +38,8 @@ function addDays(d, days) {
 }
 
 function weeklyOccurrences(e, now) {
-  // e: { diaSemana, hora, repetirAte, ... }
-  const end = new Date(`${e.repetirAte}T23:59:59`);
+  // e: { dia, hora, data, semanal, ... }
+  const end = new Date(e.data instanceof Timestamp ? e.data.toDate() : e.data);
   const windowStart = addDays(now, Math.floor(HIDE_PAST_MINUTES / (60 * 24)));
   const windowEnd = addDays(now, FUTURE_DAYS);
 
@@ -47,7 +47,7 @@ function weeklyOccurrences(e, now) {
   const until = end < windowEnd ? end : windowEnd;
   if (!(until instanceof Date) || Number.isNaN(until.getTime())) return [];
 
-  const targetDow = Number(e.diaSemana);
+  const targetDow = Number(e.dia);
   if (Number.isNaN(targetDow)) return [];
 
   // achar a próxima ocorrência a partir de windowStart
@@ -64,8 +64,7 @@ function weeklyOccurrences(e, now) {
     if (startAt >= addDays(now, -2)) {
       out.push({
         ...e,
-        tipo: "data",
-        data: dayStr,
+        data: Timestamp.fromDate(startAt),
         startAt: Timestamp.fromDate(startAt),
       });
     }
@@ -79,7 +78,9 @@ function renderEventoDiv(e, agora) {
   const startAt =
     e.startAt && typeof e.startAt.toDate === "function"
       ? e.startAt.toDate()
-      : new Date(toLocalDateTimeISO(e.data, e.hora));
+      : e.data instanceof Timestamp
+        ? e.data.toDate()
+        : new Date(e.data);
 
   const diffMin = (startAt - agora) / 60000;
 
@@ -106,7 +107,7 @@ function renderEventoDiv(e, agora) {
   div.innerHTML = `
     <div>${e.hora ?? ""}</div>
     <div>${e.sala ?? ""}</div>
-    <div>${e.evento ?? ""}</div>
+    <div>${e.titulo ?? ""}</div>
     <div>${e.solicitante ?? ""}</div>
   `;
 
@@ -151,7 +152,7 @@ function startRealtimeAgenda() {
       const items = [];
       snap.forEach((doc) => {
         const e = doc.data();
-        if (e?.tipo === "semanal") {
+        if (e?.semanal === true) {
           items.push(...weeklyOccurrences(e, agora));
         } else {
           items.push(e);
@@ -162,11 +163,15 @@ function startRealtimeAgenda() {
         const da =
           a.startAt && typeof a.startAt.toDate === "function"
             ? a.startAt.toDate()
-            : new Date(toLocalDateTimeISO(a.data, a.hora));
+            : a.data instanceof Timestamp
+              ? a.data.toDate()
+              : new Date(a.data);
         const db =
           b.startAt && typeof b.startAt.toDate === "function"
             ? b.startAt.toDate()
-            : new Date(toLocalDateTimeISO(b.data, b.hora));
+            : b.data instanceof Timestamp
+              ? b.data.toDate()
+              : new Date(b.data);
         return da - db;
       });
 

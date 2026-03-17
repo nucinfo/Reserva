@@ -10,54 +10,74 @@ async function carregarEventos() {
 
     // ordenar eventos por data/hora
     eventos.sort((a, b) => {
-
-        let da = new Date(a.data + "T" + a.hora)
-        let db = new Date(b.data + "T" + b.hora)
-
-        return da - db
-
-    })
+        let da = a.data instanceof Object && typeof a.data.toDate === "function"
+            ? a.data.toDate()
+            : new Date(a.data);
+        if (a.hora) {
+            const [h, m] = a.hora.split(":");
+            da.setHours(Number(h), Number(m), 0, 0);
+        }
+        let db = b.data instanceof Object && typeof b.data.toDate === "function"
+            ? b.data.toDate()
+            : new Date(b.data);
+        if (b.hora) {
+            const [h, m] = b.hora.split(":");
+            db.setHours(Number(h), Number(m), 0, 0);
+        }
+        return da - db;
+    });
 
     eventos.forEach(e => {
-
-        let dataHora = new Date(e.data + "T" + e.hora)
-
-        let diff = (dataHora - agora) / 60000
-
-        // remover evento antigo
-        if (diff < -60 && e.repetir === "nao") {
-            return
+        let dataHora;
+        if (e.semanal === true && typeof e.dia === "number") {
+            // Evento semanal: calcular próxima ocorrência
+            const hoje = agora;
+            const diaSemanaHoje = hoje.getDay();
+            const delta = (e.dia - diaSemanaHoje + 7) % 7;
+            const proxData = new Date(hoje);
+            proxData.setDate(hoje.getDate() + delta);
+            proxData.setHours(Number(e.hora.split(":")[0]), Number(e.hora.split(":")[1]), 0, 0);
+            dataHora = proxData;
+        } else {
+            dataHora = e.data instanceof Object && typeof e.data.toDate === "function"
+                ? e.data.toDate()
+                : new Date(e.data);
+            if (e.hora) {
+                const [h, m] = e.hora.split(":");
+                dataHora.setHours(Number(h), Number(m), 0, 0);
+            }
         }
 
-        let div = document.createElement("div")
-        div.className = "evento"
+        let diff = (dataHora - agora) / 60000;
+
+        // remover evento antigo
+        if (diff < -60 && e.semanal !== true) {
+            return;
+        }
+
+        let div = document.createElement("div");
+        div.className = "evento";
 
         // evento próximo
         if (diff <= 5 && diff > 0) {
-
-            div.classList.add("proximo")
-
-            document.getElementById("alerta").play().catch(() => { })
-
+            div.classList.add("proximo");
+            document.getElementById("alerta").play().catch(() => { });
         }
 
         // evento acontecendo
         if (diff <= 0 && diff >= -60) {
-
-            div.classList.add("agora")
-
+            div.classList.add("agora");
         }
 
         div.innerHTML = `
 <div>${e.hora}</div>
 <div>${e.sala}</div>
-<div>${e.evento}</div>
-<div>${e.solicitante}</div>
-`
+<div>${e.titulo ?? ""}</div>
+<div>${e.solicitante ?? ""}</div>
+`;
 
-        agenda.appendChild(div)
-
-    })
+        agenda.appendChild(div);
+    });
 
 }
 

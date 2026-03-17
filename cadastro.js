@@ -21,7 +21,7 @@ function setMode(mode) {
   const isSemanal = mode === "semanal";
   if (weeklyFields) weeklyFields.hidden = !isSemanal;
 
-  if (labelData) labelData.innerText = isSemanal ? "Repetir até" : "Data";
+  if (labelData) labelData.innerText = isSemanal ? "Data limite" : "Data";
   if (inputData) inputData.value = "";
   if (diaSemanaSelect) diaSemanaSelect.disabled = !isSemanal;
 }
@@ -46,13 +46,13 @@ if (form) {
     const data = document.getElementById("data")?.value?.trim();
     const hora = document.getElementById("hora")?.value?.trim();
     const sala = document.getElementById("sala")?.value?.trim();
-    const evento = document.getElementById("evento")?.value?.trim();
+    const titulo = document.getElementById("evento")?.value?.trim();
     const solicitante = document.getElementById("solicitante")?.value?.trim();
-    const diaSemanaStr = document.getElementById("diaSemana")?.value;
-    const diaSemana = diaSemanaStr != null ? Number(diaSemanaStr) : null;
+    const diaStr = document.getElementById("diaSemana")?.value;
+    const dia = diaStr != null ? Number(diaStr) : null;
 
-    if (!data || !hora || !sala || !evento || !solicitante) return;
-    if (mode === "semanal" && (diaSemana == null || Number.isNaN(diaSemana))) return;
+    if (!data || !hora || !sala || !titulo || !solicitante) return;
+    if (mode === "semanal" && (dia == null || Number.isNaN(dia))) return;
 
     const btn = form.querySelector('button[type="submit"]');
     if (btn) {
@@ -63,28 +63,24 @@ if (form) {
     try {
       if (mode === "data") {
         await addDoc(collection(db, "eventos"), {
-          tipo: "data",
-          data,
-          hora,
-          sala,
-          evento,
-          solicitante,
-          repetir: "nao",
-          startAt: toStartAt(data, hora),
           createdAt: serverTimestamp(),
+          titulo,
+          solicitante,
+          sala,
+          hora,
+          data: Timestamp.fromDate(new Date(`${data}T${hora}:00`)),
+          semanal: false
         });
       } else {
-        // semanal: "data" é o limite (até quando se repete)
         await addDoc(collection(db, "eventos"), {
-          tipo: "semanal",
-          repetirAte: data,
-          diaSemana, // 0=Dom ... 6=Sáb (mesmo padrão do JS)
-          hora,
-          sala,
-          evento,
-          solicitante,
-          repetir: "sim",
           createdAt: serverTimestamp(),
+          titulo,
+          solicitante,
+          sala,
+          hora,
+          data: Timestamp.fromDate(new Date(`${data}T23:59:59`)), // data limite
+          semanal: true,
+          dia
         });
       }
 
