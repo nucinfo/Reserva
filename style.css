@@ -28,7 +28,7 @@ font-weight:bold;
 padding:20px;
 }
 
-/* GRUPO */
+/* GRUPOS */
 .grupo{
 margin-bottom:30px;
 }
@@ -41,22 +41,15 @@ border-bottom:2px solid #333;
 padding-bottom:5px;
 }
 
-/* 🔥 CORREÇÃO PRINCIPAL AQUI */
+/* LINHAS EM COLUNA (CORREÇÃO PRINCIPAL) */
 .linha{
-display:grid !important;
-grid-template-columns: 180px 100px 180px 1fr 220px !important;
+display:grid;
+grid-template-columns: 180px 100px 180px 1fr 220px;
 gap:10px;
 padding:12px;
 font-size:22px;
 border-bottom:1px solid #333;
 align-items:center;
-}
-
-/* força cada célula a não quebrar linha */
-.linha div{
-white-space:nowrap;
-overflow:hidden;
-text-overflow:ellipsis;
 }
 
 /* CABEÇALHO */
@@ -65,7 +58,7 @@ background:#222;
 font-weight:bold;
 }
 
-/* STATUS */
+/* CORES */
 .proximo{
 background:#ff9800;
 color:#000;
