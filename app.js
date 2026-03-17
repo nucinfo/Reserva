@@ -10,14 +10,23 @@ async function carregarEventos() {
 
         let agora = new Date()
 
-        // ordenar por data + hora
+        let hoje = new Date()
+        hoje.setHours(0,0,0,0)
+
+        let amanha = new Date(hoje)
+        amanha.setDate(amanha.getDate() + 1)
+
+        let depois = new Date(amanha)
+        depois.setDate(depois.getDate() + 1)
+
+        let grupos = {
+            hoje: [],
+            amanha: [],
+            proximos: []
+        }
+
         eventos.sort((a, b) => {
-
-            let da = new Date(a.data + "T" + a.hora)
-            let db = new Date(b.data + "T" + b.hora)
-
-            return da - db
-
+            return new Date(a.data + "T" + a.hora) - new Date(b.data + "T" + b.hora)
         })
 
         eventos.forEach(e => {
@@ -25,52 +34,88 @@ async function carregarEventos() {
             if (!e.data || !e.hora) return
 
             let dataHora = new Date(e.data + "T" + e.hora)
-
-            if (isNaN(dataHora.getTime())) return
+            if (isNaN(dataHora)) return
 
             let diff = (dataHora - agora) / 60000
 
-            // remover evento antigo
-            if (diff < -60 && e.repetir === "nao") {
-                return
+            // remover antigos
+            if (diff < -60 && e.repetir === "nao") return
+
+            let dataEvento = new Date(e.data + "T00:00")
+
+            if (dataEvento.getTime() === hoje.getTime()) {
+                grupos.hoje.push(e)
+            } else if (dataEvento.getTime() === amanha.getTime()) {
+                grupos.amanha.push(e)
+            } else if (dataEvento > amanha) {
+                grupos.proximos.push(e)
             }
 
-            let div = document.createElement("div")
-            div.className = "evento"
+        })
 
-            // evento próximo
-            if (diff <= 5 && diff > 0) {
+        function criarGrupo(titulo, lista) {
 
-                div.classList.add("proximo")
+            if (lista.length === 0) return
 
-                let audio = document.getElementById("alerta")
-                if (audio) {
-                    audio.play().catch(() => { })
+            let divGrupo = document.createElement("div")
+            divGrupo.className = "grupo"
+
+            divGrupo.innerHTML = `<div class="titulo-grupo">${titulo}</div>`
+
+            let cab = document.createElement("div")
+            cab.className = "linha cabecalho"
+            cab.innerHTML = `
+<div>DATA</div>
+<div>HORA</div>
+<div>SALA</div>
+<div>EVENTO</div>
+<div>SOLICITANTE</div>
+`
+            divGrupo.appendChild(cab)
+
+            lista.forEach(e => {
+
+                let dataHora = new Date(e.data + "T" + e.hora)
+                let diff = (dataHora - agora) / 60000
+
+                let linha = document.createElement("div")
+                linha.className = "linha"
+
+                if (diff <= 5 && diff > 0) {
+                    linha.classList.add("proximo")
+
+                    let audio = document.getElementById("alerta")
+                    if (audio) audio.play().catch(()=>{})
                 }
-            }
 
-            // evento acontecendo
-            if (diff <= 0 && diff >= -60) {
-                div.classList.add("agora")
-            }
+                if (diff <= 0 && diff >= -60) {
+                    linha.classList.add("agora")
+                }
 
-            // formatar data para BR
-            let dataFormatada = new Date(e.data + "T00:00")
-                .toLocaleDateString("pt-BR")
+                let dataFormatada = new Date(e.data + "T00:00")
+                    .toLocaleDateString("pt-BR")
 
-            div.innerHTML = `
-<div>${dataFormatada} ${e.hora}</div>
+                linha.innerHTML = `
+<div>${dataFormatada}</div>
+<div>${e.hora}</div>
 <div>${e.sala}</div>
 <div>${e.evento}</div>
 <div>${e.solicitante}</div>
 `
 
-            agenda.appendChild(div)
+                divGrupo.appendChild(linha)
 
-        })
+            })
+
+            agenda.appendChild(divGrupo)
+        }
+
+        criarGrupo("HOJE", grupos.hoje)
+        criarGrupo("AMANHÃ", grupos.amanha)
+        criarGrupo("PRÓXIMOS", grupos.proximos)
 
     } catch (erro) {
-        console.error("Erro ao carregar eventos:", erro)
+        console.error("Erro:", erro)
     }
 }
 
@@ -81,12 +126,8 @@ carregarEventos()
 
 // relógio
 function atualizarRelogio() {
-
-    let agora = new Date()
-
     document.getElementById("relogio").innerText =
-        agora.toLocaleTimeString()
-
+        new Date().toLocaleTimeString()
 }
 
 setInterval(atualizarRelogio, 1000)
