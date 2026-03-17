@@ -90,7 +90,7 @@ function renderEventoDiv(e, agora) {
   const div = document.createElement("div");
   div.className = "evento";
 
-  if (diffMin <= 5 && diffMin > 0) {
+  if (diffMin <= 30 && diffMin > 0) {
     div.classList.add("proximo");
     const alerta = document.getElementById("alerta");
     if (alerta && typeof alerta.play === "function") alerta.play();
