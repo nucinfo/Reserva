@@ -1,82 +1,93 @@
 async function carregarEventos() {
 
-    let resposta = await fetch("eventos.json")
-    let eventos = await resposta.json()
+    try {
 
-    let agenda = document.getElementById("agenda")
-    agenda.innerHTML = ""
+        let resposta = await fetch("eventos.json?nocache=" + Date.now())
+        let eventos = await resposta.json()
 
-    let agora = new Date()
+        let agenda = document.getElementById("agenda")
+        agenda.innerHTML = ""
 
-    // ordenar eventos por data/hora
-    eventos.sort((a, b) => {
+        let agora = new Date()
 
-        let da = new Date(a.data + "T" + a.hora)
-        let db = new Date(b.data + "T" + b.hora)
+        // ordenar por data + hora
+        eventos.sort((a, b) => {
 
-        return da - db
+            let da = new Date(a.data + "T" + a.hora)
+            let db = new Date(b.data + "T" + b.hora)
 
-    })
+            return da - db
 
-    eventos.forEach(e => {
+        })
 
-        let dataHora = new Date(e.data + "T" + e.hora)
+        eventos.forEach(e => {
 
-        let diff = (dataHora - agora) / 60000
+            if (!e.data || !e.hora) return
 
-        // remover evento antigo
-        if (diff < -60 && e.repetir === "nao") {
-            return
-        }
+            let dataHora = new Date(e.data + "T" + e.hora)
 
-        let div = document.createElement("div")
-        div.className = "evento"
+            if (isNaN(dataHora.getTime())) return
 
-        // evento próximo
-        if (diff <= 5 && diff > 0) {
+            let diff = (dataHora - agora) / 60000
 
-            div.classList.add("proximo")
+            // remover evento antigo
+            if (diff < -60 && e.repetir === "nao") {
+                return
+            }
 
-            document.getElementById("alerta").play().catch(() => { })
+            let div = document.createElement("div")
+            div.className = "evento"
 
-        }
+            // evento próximo
+            if (diff <= 5 && diff > 0) {
 
-        // evento acontecendo
-        if (diff <= 0 && diff >= -60) {
+                div.classList.add("proximo")
 
-            div.classList.add("agora")
+                let audio = document.getElementById("alerta")
+                if (audio) {
+                    audio.play().catch(() => { })
+                }
+            }
 
-        }
+            // evento acontecendo
+            if (diff <= 0 && diff >= -60) {
+                div.classList.add("agora")
+            }
 
-        div.innerHTML = `
-<div>${e.hora}</div>
+            // formatar data para BR
+            let dataFormatada = new Date(e.data + "T00:00")
+                .toLocaleDateString("pt-BR")
+
+            div.innerHTML = `
+<div>${dataFormatada} ${e.hora}</div>
 <div>${e.sala}</div>
 <div>${e.evento}</div>
 <div>${e.solicitante}</div>
 `
 
-        agenda.appendChild(div)
+            agenda.appendChild(div)
 
-    })
+        })
 
+    } catch (erro) {
+        console.error("Erro ao carregar eventos:", erro)
+    }
 }
 
-// atualizar agenda
-setInterval(carregarEventos, 30000)
-
+// atualizar
+setInterval(carregarEventos, 10000)
 carregarEventos()
+
 
 // relógio
 function atualizarRelogio() {
 
     let agora = new Date()
 
-    let hora = agora.toLocaleTimeString()
-
-    document.getElementById("relogio").innerText = hora
+    document.getElementById("relogio").innerText =
+        agora.toLocaleTimeString()
 
 }
 
 setInterval(atualizarRelogio, 1000)
-
 atualizarRelogio()
