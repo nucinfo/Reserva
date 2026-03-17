@@ -28,7 +28,6 @@ font-weight:bold;
 padding:20px;
 }
 
-/* GRUPOS */
 .grupo{
 margin-bottom:30px;
 }
@@ -41,24 +40,19 @@ border-bottom:2px solid #333;
 padding-bottom:5px;
 }
 
-/* LINHAS EM COLUNA (CORREÇÃO PRINCIPAL) */
 .linha{
 display:grid;
-grid-template-columns: 180px 100px 180px 1fr 220px;
-gap:10px;
+grid-template-columns:150px 100px 150px 1fr 200px;
 padding:12px;
-font-size:22px;
+font-size:24px;
 border-bottom:1px solid #333;
-align-items:center;
 }
 
-/* CABEÇALHO */
 .cabecalho{
 background:#222;
 font-weight:bold;
 }
 
-/* CORES */
 .proximo{
 background:#ff9800;
 color:#000;
@@ -69,7 +63,6 @@ background:#e53935;
 animation:piscando 1s infinite;
 }
 
-/* ANIMAÇÃO */
 @keyframes piscando{
 0%{opacity:1}
 50%{opacity:0.5}
