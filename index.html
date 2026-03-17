@@ -3,24 +3,22 @@
 <head>
 <meta charset="UTF-8">
 <title>Painel de Salas</title>
-
-<!-- 🔥 GARANTE QUE O CSS CARREGUE -->
-<link rel="stylesheet" href="style.css?nocache=1">
-
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
 <div class="topo">
-    <h1>AGENDA DAS SALAS</h1>
-    <div id="relogio"></div>
+<h1>AGENDA DAS SALAS</h1>
+<div id="relogio"></div>
 </div>
 
 <div id="agenda"></div>
 
 <audio id="alerta" src="sounds/alert.mp3"></audio>
 
-<script src="app.js?nocache=1"></script>
+<script type="module" src="agenda.js"></script>
 
 </body>
 </html>
