@@ -104,7 +104,18 @@ function renderEventoDiv(e, agora) {
     div.classList.add("passado");
   }
 
+  let primeiraColuna = "";
+  if (e.semanal === true && typeof e.dia === "number") {
+    // Evento semanal: mostrar nome do dia
+    const diasSemana = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+    primeiraColuna = diasSemana[e.dia] ?? "";
+  } else {
+    // Evento por data: mostrar data
+    const dataObj = startAt;
+    primeiraColuna = `${dataObj.getDate().toString().padStart(2, "0")}/${(dataObj.getMonth()+1).toString().padStart(2, "0")}/${dataObj.getFullYear()}`;
+  }
   div.innerHTML = `
+    <div>${primeiraColuna}</div>
     <div>${e.hora ?? ""}</div>
     <div>${e.sala ?? ""}</div>
     <div>${e.titulo ?? ""}</div>
