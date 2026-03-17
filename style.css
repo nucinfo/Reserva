@@ -59,6 +59,18 @@ h1{
   margin:0 auto;
 }
 
+.section-title {
+  width: 90%;
+  margin: 20px auto 10px;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--accent);
+  border-left: 4px solid var(--accent);
+  padding-left: 10px;
+  letter-spacing: .5px;
+  text-transform: uppercase;
+}
+
 .evento{
   display:grid;
   grid-template-columns:1fr 1fr 1fr 1fr 1fr;

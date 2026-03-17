@@ -74,13 +74,40 @@ function weeklyOccurrences(e, now) {
   return out;
 }
 
+function getEventStartAt(e) {
+  if (e.startAt && typeof e.startAt.toDate === "function") {
+    return e.startAt.toDate();
+  }
+  if (e.data instanceof Timestamp) {
+    return e.data.toDate();
+  }
+  return new Date(e.data);
+}
+
+function sectionLabelForDate(date, now) {
+  const d = new Date(date);
+  d.setHours(0, 0, 0, 0);
+
+  const today = new Date(now);
+  today.setHours(0, 0, 0, 0);
+
+  const tomorrow = new Date(today);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+
+  if (d.getTime() === today.getTime()) return "HOJE";
+  if (d.getTime() === tomorrow.getTime()) return "AMANHÃ";
+  return "PRÓXIMOS";
+}
+
+function renderSectionTitle(label) {
+  const el = document.createElement("div");
+  el.className = "section-title";
+  el.innerText = label;
+  return el;
+}
+
 function renderEventoDiv(e, agora) {
-  const startAt =
-    e.startAt && typeof e.startAt.toDate === "function"
-      ? e.startAt.toDate()
-      : e.data instanceof Timestamp
-        ? e.data.toDate()
-        : new Date(e.data);
+  const startAt = getEventStartAt(e);
 
   const diffMin = (startAt - agora) / 60000;
 
@@ -134,9 +161,19 @@ function fallbackFetchJson() {
     .then((eventos) => {
       agenda.innerHTML = "";
       const agora = new Date();
+      let currentSection;
       eventos.forEach((e) => {
         const div = renderEventoDiv(e, agora);
-        if (div) agenda.appendChild(div);
+        if (!div) return;
+
+        const startAt = getEventStartAt(e);
+        const section = sectionLabelForDate(startAt, agora);
+        if (section !== currentSection) {
+          currentSection = section;
+          agenda.appendChild(renderSectionTitle(section));
+        }
+
+        agenda.appendChild(div);
       });
     })
     .catch(() => {
@@ -171,24 +208,24 @@ function startRealtimeAgenda() {
       });
 
       items.sort((a, b) => {
-        const da =
-          a.startAt && typeof a.startAt.toDate === "function"
-            ? a.startAt.toDate()
-            : a.data instanceof Timestamp
-              ? a.data.toDate()
-              : new Date(a.data);
-        const db =
-          b.startAt && typeof b.startAt.toDate === "function"
-            ? b.startAt.toDate()
-            : b.data instanceof Timestamp
-              ? b.data.toDate()
-              : new Date(b.data);
+        const da = getEventStartAt(a);
+        const db = getEventStartAt(b);
         return da - db;
       });
 
+      let currentSection;
       items.forEach((e) => {
         const div = renderEventoDiv(e, agora);
-        if (div) agenda.appendChild(div);
+        if (!div) return;
+
+        const startAt = getEventStartAt(e);
+        const section = sectionLabelForDate(startAt, agora);
+        if (section !== currentSection) {
+          currentSection = section;
+          agenda.appendChild(renderSectionTitle(section));
+        }
+
+        agenda.appendChild(div);
       });
     },
     () => {
