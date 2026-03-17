@@ -11,7 +11,7 @@
 
 <main class="page">
   <div class="card">
-    <h2 class="page-title">Novo Evento</h2>
+    <h2 class="page-title" id="formTitle">Novo Evento</h2>
 
     <div class="segmented" role="group" aria-label="Tipo de cadastro">
       <label class="segmented-item">
@@ -66,9 +66,15 @@
       </label>
 
       <div class="actions">
-        <button class="btn btn-primary" type="submit">Salvar</button>
+        <button class="btn btn-primary" type="submit" id="saveBtn">Salvar</button>
+        <button class="btn" type="button" id="cancelBtn" style="margin-left:10px;">Cancelar</button>
       </div>
     </form>
+  </div>
+
+  <div class="card" style="margin-top:18px;">
+    <h2 class="page-title">Eventos</h2>
+    <div id="eventosList"></div>
   </div>
 </main>
 

@@ -89,6 +89,25 @@ h1{
   text-align:right;
 }
 
+/* Layout para listagem de evento com ações */
+.evento-gerenciar {
+  grid-template-columns: 1.2fr 1.1fr 0.9fr 1fr 1.5fr 1.5fr 1.1fr;
+}
+
+.evento-gerenciar button {
+  padding: 8px 10px;
+  font-size: 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(234,240,255,.16);
+  background: rgba(7,10,18,.55);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.evento-gerenciar button:hover {
+  filter: brightness(1.1);
+}
+
 .proximo{
   border-color:rgba(255,176,32,.42);
   background:linear-gradient(90deg, rgba(255,176,32,.26), rgba(17,26,46,.70));
