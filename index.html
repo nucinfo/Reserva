@@ -1,28 +1,58 @@
 <!DOCTYPE html>
 <html>
+
 <head>
-<meta charset="UTF-8">
-<title>Painel de Salas</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <title>Painel de Salas</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
-<div class="topo">
-<h1>AGENDA DAS SALAS</h1>
-<div id="relogio"></div>
-</div>
+    <div class="topo">
+        <h1>AGENDA DAS SALAS</h1>
+        <div id="relogio"></div>
+    </div>
 
-<div id="agenda"></div>
+    <div id="agenda"></div>
 
-<audio id="alerta" src="sounds/alert.mp3"></audio>
+    <audio id="alerta" src="sounds/alert.mp3"></audio>
 
-<script type="module" src="agenda.js"></script>
+    <script type="module" src="agenda.js"></script>
 
-<script>
-// Atualização automática do painel
-setInterval(()=>{window.location = "/"},5000)
-</script>
+
+    <script>
+        // Atualização automática baseada em novo commit no GitHub (RSS)
+        const FEED_URL = 'https://github.com/nucinfo/Reserva/commits.atom';
+        const STORAGE_KEY = 'lastCommitId';
+
+        async function checkForNewCommit() {
+            try {
+                const resp = await fetch(FEED_URL);
+                if (!resp.ok) return;
+                const text = await resp.text();
+                const parser = new window.DOMParser();
+                const xml = parser.parseFromString(text, 'application/xml');
+                const firstEntry = xml.querySelector('entry');
+                if (!firstEntry) return;
+                const commitId = firstEntry.querySelector('id')?.textContent;
+                if (!commitId) return;
+                const lastCommitId = localStorage.getItem(STORAGE_KEY);
+                if (lastCommitId && lastCommitId !== commitId) {
+                    // Novo commit detectado, recarrega o painel
+                    localStorage.setItem(STORAGE_KEY, commitId);
+                    window.location.reload();
+                } else if (!lastCommitId) {
+                    // Primeira vez, salva o commit atual
+                    localStorage.setItem(STORAGE_KEY, commitId);
+                }
+            } catch (e) {
+                console.error('Erro ao verificar commits:', e);
+            }
+        }
+
+        setInterval(checkForNewCommit, 15000); // checa a cada 15s
+    </script>
 </body>
 </html>
