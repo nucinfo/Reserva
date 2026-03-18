@@ -61,7 +61,7 @@ async function carregarEventos() {
         // evento próximo
         if (diff <= 5 && diff > 0) {
             div.classList.add("proximo");
-            document.getElementById("alerta").play().catch(() => { });
+          
         }
 
         // evento acontecendo

@@ -14,7 +14,69 @@ const FUTURE_DAYS = 30; // janela para materializar eventos semanais
 
 // Ordem crescente para que possamos escolher o alerta mais próximo do momento atual
 const ALERT_THRESHOLDS = [3, 5, 10, 15, 30];
-const playedAlerts = new Map();
+
+function getPlayedAlerts(key) {
+  const stored = localStorage.getItem('playedAlerts');
+  const all = stored ? JSON.parse(stored) : {};
+  return new Set(all[key] || []);
+}
+
+function setPlayedAlerts(key, played) {
+  const stored = localStorage.getItem('playedAlerts');
+  const all = stored ? JSON.parse(stored) : {};
+  all[key] = Array.from(played);
+  localStorage.setItem('playedAlerts', JSON.stringify(all));
+}
+
+function showAlertModal(message) {
+  return new Promise((resolve) => {
+    const modal = document.getElementById('alertModal');
+    const messageEl = document.getElementById('alertMessage');
+    const cancelBtn = document.getElementById('alertCancel');
+    const disableBtn = document.getElementById('alertDisable');
+
+    if (!modal || !messageEl) return resolve(false);
+
+    const AUTO_CLOSE_TIME = 45; // segundos
+    let timeRemaining = AUTO_CLOSE_TIME;
+
+    const updateMessage = () => {
+      messageEl.innerHTML = `${message}<div style="margin-top: 12px; font-size: 13px; color: var(--muted);">Fechará automaticamente em <strong>${timeRemaining}s</strong></div>`;
+    };
+
+    updateMessage();
+
+    const timerInterval = setInterval(() => {
+      timeRemaining--;
+      updateMessage();
+      if (timeRemaining <= 0) {
+        clearInterval(timerInterval);
+        handleCancel();
+      }
+    }, 1000);
+
+    const handleCancel = () => {
+      clearInterval(timerInterval);
+      modal.classList.remove('show');
+      cancelBtn.removeEventListener('click', handleCancel);
+      disableBtn.removeEventListener('click', handleDisable);
+      resolve(false);
+    };
+
+    const handleDisable = () => {
+      clearInterval(timerInterval);
+      modal.classList.remove('show');
+      cancelBtn.removeEventListener('click', handleCancel);
+      disableBtn.removeEventListener('click', handleDisable);
+      resolve(true);
+    };
+
+    cancelBtn.addEventListener('click', handleCancel);
+    disableBtn.addEventListener('click', handleDisable);
+
+    modal.classList.add('show');
+  });
+}
 
 function startClock() {
   const el = document.getElementById("relogio");
@@ -120,11 +182,7 @@ function getEventKey(e) {
 
 function maybePlayAlert(e, diffMin) {
   const key = getEventKey(e);
-  let played = playedAlerts.get(key);
-  if (!played) {
-    played = new Set();
-    playedAlerts.set(key, played);
-  }
+  let played = getPlayedAlerts(key);
 
   if (diffMin > 0) {
     // Encontra o menor threshold que ainda é maior que o tempo restante.
@@ -133,9 +191,31 @@ function maybePlayAlert(e, diffMin) {
     if (threshold && !played.has(threshold)) {
       played.add(threshold);
       const alerta = document.getElementById("alerta");
-      if (alerta && typeof alerta.play === "function") alerta.play();
+      if (alerta && typeof alerta.play === "function") {
+        alerta.play();
+        // Mostrar notificação para desabilitar próximos alertas (não-bloqueante)
+        showAlertModal(`Alerta tocado para ${threshold} minutos antes do evento "${e.titulo}". Desabilitar próximos alertas?`).then((disable) => {
+          if (disable) {
+            // Adicionar todos os thresholds menores ao played (próximos alertas)
+            ALERT_THRESHOLDS.filter(t => t < threshold).forEach(t => played.add(t));
+            setPlayedAlerts(key, played);
+            // Re-renderizar para atualizar o badge imediatamente
+            const agenda = document.getElementById("agenda");
+            if (agenda && latestItems.length) {
+              renderItems(agenda, latestItems, new Date());
+            }
+          }
+        });
+        setPlayedAlerts(key, played);
+      }
     }
   }
+}
+
+function areAllAlertsDisabled(e) {
+  const key = getEventKey(e);
+  const played = getPlayedAlerts(key);
+  return ALERT_THRESHOLDS.every(threshold => played.has(threshold));
 }
 
 function renderEventoDiv(e, agora) {
@@ -145,6 +225,16 @@ function renderEventoDiv(e, agora) {
 
   const div = document.createElement("div");
   div.className = "evento";
+
+  // Adiciona classe se os alertas foram desabilitados
+  if (areAllAlertsDisabled(e)) {
+    div.classList.add("alertas-desabilitados");
+  }
+
+  // Evento quando faltam 30-25 minutos
+  if (diffMin > 0 && diffMin <= 30) {
+    div.classList.add("proximo-30");
+  }
 
   if (diffMin <= 0 && diffMin >= -60) {
     div.classList.add("agora");
@@ -164,11 +254,12 @@ function renderEventoDiv(e, agora) {
     const dataObj = startAt;
     primeiraColuna = `${dataObj.getDate().toString().padStart(2, "0")}/${(dataObj.getMonth()+1).toString().padStart(2, "0")}/${dataObj.getFullYear()}`;
   }
+  const alertBadge = areAllAlertsDisabled(e) ? '<span class="alert-badge">🔇 Alertas Desabilitados</span>' : '';
   div.innerHTML = `
     <div>${primeiraColuna}</div>
     <div>${e.hora ?? ""}</div>
     <div>${e.sala ?? ""}</div>
-    <div>${e.titulo ?? ""}</div>
+    <div>${e.titulo ?? ""} ${alertBadge}</div>
     <div>${e.solicitante ?? ""}</div>
   `;
 
@@ -260,6 +351,25 @@ function renderItems(agenda, items, agora) {
   }
 }
 
+function cleanOldAlerts(now) {
+  const stored = localStorage.getItem('playedAlerts');
+  if (!stored) return;
+  const all = JSON.parse(stored);
+  const keysToRemove = [];
+  for (const key in all) {
+    const parts = key.split(':');
+    if (parts.length === 2) {
+      const startAtStr = parts[1];
+      const startAt = new Date(startAtStr);
+      if (startAt < addDays(now, -1)) {
+        keysToRemove.push(key);
+      }
+    }
+  }
+  keysToRemove.forEach(k => delete all[k]);
+  localStorage.setItem('playedAlerts', JSON.stringify(all));
+}
+
 function startRealtimeAgenda() {
   const agenda = document.getElementById("agenda");
   if (!agenda) return;
@@ -293,6 +403,7 @@ function startRealtimeAgenda() {
 
       latestItems = items;
       renderItems(agenda, latestItems, agora);
+      cleanOldAlerts(agora);
     },
     () => {
       // Se regras / rede impedir Firestore, ao menos mantém o painel funcionando.

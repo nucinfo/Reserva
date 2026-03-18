@@ -28,6 +28,19 @@
 
     <audio id="alerta" src="sounds/alert.mp3"></audio>
 
+    <div id="alertModal">
+        <div class="alert-content">
+            <div class="alert-title">⏰ Alerta</div>
+            <div class="alert-message" id="alertMessage">Alerta tocado. Desabilitar próximos alertas para este evento?</div>
+            <div class="alert-buttons">
+                <button class="alert-btn" id="alertCancel">Continuar Alertas</button>
+                <button class="alert-btn primary" id="alertDisable">Desabilitar Alertas</button>
+            </div>
+        </div>
+    </div>
+
+    
+
     <script type="module" src="agenda.js"></script>
 
 

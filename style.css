@@ -145,6 +145,11 @@ h1{
   background:linear-gradient(90deg, rgba(255,176,32,.26), rgba(17,26,46,.70));
 }
 
+.proximo-30 {
+  border-color: rgba(79, 124, 255, 0.5) !important;
+  background: linear-gradient(90deg, rgba(79, 124, 255, 0.2), rgba(17, 26, 46, 0.85)) !important;
+}
+
 .agora{
   border-color:rgba(255,59,59,.55);
   background:linear-gradient(90deg, rgba(255,59,59,.22), rgba(17,26,46,.70));
@@ -154,6 +159,25 @@ h1{
 .passado{
   opacity:.62;
   filter:saturate(.75);
+}
+
+.alertas-desabilitados {
+  opacity: 0.7;
+  border-color: rgba(255, 176, 32, 0.3) !important;
+}
+
+.alert-badge {
+  display: inline-block;
+  background: rgba(255, 176, 32, 0.2);
+  border: 1px solid rgba(255, 176, 32, 0.5);
+  color: var(--warn);
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  margin-left: 8px;
+  white-space: nowrap;
+  letter-spacing: 0.3px;
 }
 
 @keyframes piscando{
@@ -297,4 +321,94 @@ input:focus, select:focus{
   }
   .evento > div{grid-column:auto; text-align:left}
   .form{grid-template-columns: 1fr}
+}
+
+/* Modal de Notificação */
+#alertModal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 9999;
+  backdrop-filter: blur(4px);
+  animation: fadeIn 0.3s ease-out;
+}
+
+#alertModal.show {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.alert-content {
+  background: rgba(17, 26, 46, 0.95);
+  border: 2px solid var(--accent);
+  border-radius: 18px;
+  padding: 28px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+  max-width: 400px;
+  animation: slideUp 0.3s ease-out;
+  text-align: center;
+}
+
+.alert-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--accent);
+  margin: 0 0 16px;
+}
+
+.alert-message {
+  font-size: 16px;
+  color: var(--muted);
+  margin: 0 0 24px;
+  line-height: 1.5;
+}
+
+.alert-buttons {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.alert-btn {
+  padding: 10px 24px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: rgba(7, 10, 18, 0.55);
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.alert-btn:hover {
+  filter: brightness(1.15);
+  border-color: var(--accent);
+}
+
+.alert-btn.primary {
+  background: linear-gradient(180deg, rgba(79, 124, 255, 1), rgba(63, 96, 210, 1));
+  border-color: var(--accent);
+}
+
+.alert-btn.primary:hover {
+  box-shadow: 0 8px 20px rgba(79, 124, 255, 0.3);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
