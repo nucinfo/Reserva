@@ -4,11 +4,17 @@ import {
   orderBy,
   query,
   Timestamp,
+  deleteDoc,
+  doc,
 } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
 import { db } from "./firebase.js";
 
-const HIDE_PAST_MINUTES = -24 * 60; // mostra até 24h no passado
+const HIDE_PAST_MINUTES = -2 * 60; // esconde eventos não semanais 2h após o início
 const FUTURE_DAYS = 30; // janela para materializar eventos semanais
+
+// Ordem crescente para que possamos escolher o alerta mais próximo do momento atual
+const ALERT_THRESHOLDS = [3, 5, 10, 15, 30];
+const playedAlerts = new Map();
 
 function startClock() {
   const el = document.getElementById("relogio");
@@ -106,22 +112,39 @@ function renderSectionTitle(label) {
   return el;
 }
 
+function getEventKey(e) {
+  const id = e.__docId ?? "";
+  const startAt = getEventStartAt(e);
+  return `${id}:${startAt.toISOString()}`;
+}
+
+function maybePlayAlert(e, diffMin) {
+  const key = getEventKey(e);
+  let played = playedAlerts.get(key);
+  if (!played) {
+    played = new Set();
+    playedAlerts.set(key, played);
+  }
+
+  if (diffMin > 0) {
+    // Encontra o menor threshold que ainda é maior que o tempo restante.
+    // Isso evita tocar o alerta "30" quando já estamos a 2 minutos do evento.
+    const threshold = ALERT_THRESHOLDS.find((t) => diffMin <= t);
+    if (threshold && !played.has(threshold)) {
+      played.add(threshold);
+      const alerta = document.getElementById("alerta");
+      if (alerta && typeof alerta.play === "function") alerta.play();
+    }
+  }
+}
+
 function renderEventoDiv(e, agora) {
   const startAt = getEventStartAt(e);
 
   const diffMin = (startAt - agora) / 60000;
 
-  // Esconde só eventos MUITO antigos (evita poluir a tela)
-  if (diffMin < HIDE_PAST_MINUTES && e.repetir === "nao") return null;
-
   const div = document.createElement("div");
   div.className = "evento";
-
-  if (diffMin <= 30 && diffMin > 0) {
-    div.classList.add("proximo");
-    const alerta = document.getElementById("alerta");
-    if (alerta && typeof alerta.play === "function") alerta.play();
-  }
 
   if (diffMin <= 0 && diffMin >= -60) {
     div.classList.add("agora");
@@ -182,6 +205,61 @@ function fallbackFetchJson() {
     });
 }
 
+let latestItems = [];
+
+function checkAlerts() {
+  const agora = new Date();
+  for (const e of latestItems) {
+    const startAt = getEventStartAt(e);
+    const diffMin = (startAt - agora) / 60000;
+    maybePlayAlert(e, diffMin);
+  }
+}
+
+function renderItems(agenda, items, agora) {
+  agenda.innerHTML = "";
+  let currentSection;
+
+  // Remove itens antigos (por data) e re-renderiza o restante.
+  for (let i = 0; i < items.length; ) {
+    const e = items[i];
+    const startAt = getEventStartAt(e);
+    const diffMin = (startAt - agora) / 60000;
+    const isSemanal = e.semanal === true;
+
+    // Remove eventos por data logo após a virada do dia (00:00 do dia seguinte)
+    if (!isSemanal) {
+      const eventDay = new Date(startAt);
+      eventDay.setHours(0, 0, 0, 0);
+      const deleteAt = addDays(eventDay, 1); // próximo dia às 00:00
+      if (agora >= deleteAt) {
+        if (e.__docId) {
+          deleteDoc(doc(db, "eventos", e.__docId)).catch(() => {
+            // ignore failures (ex: permissões)
+          });
+        }
+        items.splice(i, 1);
+        continue; // não incrementa i
+      }
+    }
+
+    const div = renderEventoDiv(e, agora);
+    if (!div) {
+      i++;
+      continue;
+    }
+
+    const section = sectionLabelForDate(startAt, agora);
+    if (section !== currentSection) {
+      currentSection = section;
+      agenda.appendChild(renderSectionTitle(section));
+    }
+
+    agenda.appendChild(div);
+    i++;
+  }
+}
+
 function startRealtimeAgenda() {
   const agenda = document.getElementById("agenda");
   if (!agenda) return;
@@ -194,16 +272,16 @@ function startRealtimeAgenda() {
   onSnapshot(
     q,
     (snap) => {
-      agenda.innerHTML = "";
       const agora = new Date();
 
       const items = [];
-      snap.forEach((doc) => {
-        const e = doc.data();
+      snap.forEach((docSnap) => {
+        const e = docSnap.data();
+        const item = { ...e, __docId: docSnap.id };
         if (e?.semanal === true) {
-          items.push(...weeklyOccurrences(e, agora));
+          items.push(...weeklyOccurrences(item, agora));
         } else {
-          items.push(e);
+          items.push(item);
         }
       });
 
@@ -213,26 +291,29 @@ function startRealtimeAgenda() {
         return da - db;
       });
 
-      let currentSection;
-      items.forEach((e) => {
-        const div = renderEventoDiv(e, agora);
-        if (!div) return;
-
-        const startAt = getEventStartAt(e);
-        const section = sectionLabelForDate(startAt, agora);
-        if (section !== currentSection) {
-          currentSection = section;
-          agenda.appendChild(renderSectionTitle(section));
-        }
-
-        agenda.appendChild(div);
-      });
+      latestItems = items;
+      renderItems(agenda, latestItems, agora);
     },
     () => {
       // Se regras / rede impedir Firestore, ao menos mantém o painel funcionando.
       fallbackFetchJson();
     }
   );
+
+  // Re-render periodically so that events are removed automatically when they expire
+  setInterval(() => {
+    const agora = new Date();
+    if (latestItems.length) {
+      renderItems(agenda, latestItems, agora);
+    }
+  }, 30_000);
+
+  // Verifica o alarme a cada segundo (sem precisar re-renderizar toda a lista)
+  setInterval(() => {
+    if (latestItems.length) {
+      checkAlerts();
+    }
+  }, 1000);
 }
 
 startClock();
