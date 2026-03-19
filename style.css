@@ -56,10 +56,8 @@ h1{
   color:var(--muted);
   font-variant-numeric: tabular-nums;
   display:flex;
-  position: absolute;
   padding: 2px 20px;
   justify-content: right;
-  bottom: 0%;
   background-image: linear-gradient(to top, #0D1220, rgba(0,0,0,0));
   width: 100%
 }

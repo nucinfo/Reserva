@@ -247,12 +247,23 @@ function renderEventoDiv(e, agora) {
   let primeiraColuna = "";
   if (e.semanal === true && typeof e.dia === "number") {
     // Evento semanal: mostrar nome do dia
-    const diasSemana = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+    const diasSemana = ["DOM", "SEG", "TER", "QUA", "QUI", "SEX", "SÁB"];
     primeiraColuna = diasSemana[e.dia] ?? "";
   } else {
     // Evento por data: mostrar data
     const dataObj = startAt;
-    primeiraColuna = `${dataObj.getDate().toString().padStart(2, "0")}/${(dataObj.getMonth()+1).toString().padStart(2, "0")}/${dataObj.getFullYear()}`;
+    const hoje = new Date(agora);
+    hoje.setHours(0, 0, 0, 0);
+    const dataEvento = new Date(dataObj);
+    dataEvento.setHours(0, 0, 0, 0);
+    
+    if (dataEvento.getTime() === hoje.getTime()) {
+      // Se for hoje, mostrar apenas dia/mês
+      primeiraColuna = `${dataObj.getDate().toString().padStart(2, "0")}/${(dataObj.getMonth()+1).toString().padStart(2, "0")}`;
+    } else {
+      // Se não for hoje, mostrar dia/mês/ano
+      primeiraColuna = `${dataObj.getDate().toString().padStart(2, "0")}/${(dataObj.getMonth()+1).toString().padStart(2, "0")}/${dataObj.getFullYear()}`;
+    }
   }
   const alertBadge = areAllAlertsDisabled(e) ? '<span class="alert-badge">🔇 Alertas Desabilitados</span>' : '';
   div.innerHTML = `
@@ -310,6 +321,7 @@ function checkAlerts() {
 function renderItems(agenda, items, agora) {
   agenda.innerHTML = "";
   let currentSection;
+  const displayedWeeklyIds = new Set(); // Rastreia IDs semanais já mostrados
 
   // Remove itens antigos (por data) e re-renderiza o restante.
   for (let i = 0; i < items.length; ) {
@@ -334,6 +346,16 @@ function renderItems(agenda, items, agora) {
       }
     }
 
+    // Para eventos semanais: mostrar apenas um por ID
+    if (isSemanal) {
+      const weeklyId = e.__docId;
+      if (displayedWeeklyIds.has(weeklyId)) {
+        i++;
+        continue;
+      }
+      displayedWeeklyIds.add(weeklyId);
+    }
+
     const div = renderEventoDiv(e, agora);
     if (!div) {
       i++;
@@ -348,6 +370,15 @@ function renderItems(agenda, items, agora) {
 
     agenda.appendChild(div);
     i++;
+  }
+
+  if (agenda.children.length === 0) {
+    const emptyMsg = document.createElement("div");
+    emptyMsg.style.color = "#AAB6D6";
+    emptyMsg.style.padding = "20px 10px";
+    emptyMsg.style.textAlign = "center";
+    emptyMsg.innerText = "Nenhum evento agendado";
+    agenda.appendChild(emptyMsg);
   }
 }
 
@@ -405,9 +436,9 @@ function startRealtimeAgenda() {
       renderItems(agenda, latestItems, agora);
       cleanOldAlerts(agora);
     },
-    () => {
-      // Se regras / rede impedir Firestore, ao menos mantém o painel funcionando.
-      fallbackFetchJson();
+    (error) => {
+      console.error("Erro ao carregar eventos:", error);
+      agenda.innerHTML = '<div style="color: red; padding: 20px;">Erro: Verifique as permissões do Firestore e se a coleção "eventos" existe.</div>';
     }
   );
 
