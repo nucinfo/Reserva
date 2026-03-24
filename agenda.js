@@ -346,12 +346,19 @@ function renderItems(agenda, items, agora) {
       }
     }
 
+    // Remove eventos semanais que já passaram 1 hora
+    if (isSemanal && diffMin < -60) {
+      items.splice(i, 1);
+      continue; // não incrementa i
+    }
+
     // Para eventos semanais: mostrar apenas um por ID
     if (isSemanal) {
       const weeklyId = e.__docId;
       if (displayedWeeklyIds.has(weeklyId)) {
-        i++;
-        continue;
+        // Remove a duplicata do array
+        items.splice(i, 1);
+        continue; // não incrementa i
       }
       displayedWeeklyIds.add(weeklyId);
     }
@@ -392,7 +399,9 @@ function cleanOldAlerts(now) {
     if (parts.length === 2) {
       const startAtStr = parts[1];
       const startAt = new Date(startAtStr);
-      if (startAt < addDays(now, -1)) {
+      // Sincronizar com HIDE_PAST_MINUTES de weeklyOccurrences para remover
+      // alertas de eventos que saíram da janela de renderização
+      if (startAt < addDays(now, Math.floor(HIDE_PAST_MINUTES / (60 * 24)))) {
         keysToRemove.push(key);
       }
     }
