@@ -1,11 +1,11 @@
 import {
   collection,
   onSnapshot,
-  orderBy,
   query,
   Timestamp,
   deleteDoc,
   doc,
+  updateDoc,
 } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
 import { db } from "./firebase.js";
 
@@ -25,6 +25,14 @@ function setPlayedAlerts(key, played) {
   const stored = localStorage.getItem('playedAlerts');
   const all = stored ? JSON.parse(stored) : {};
   all[key] = Array.from(played);
+  localStorage.setItem('playedAlerts', JSON.stringify(all));
+}
+
+function clearPlayedAlerts(key) {
+  const stored = localStorage.getItem('playedAlerts');
+  if (!stored) return;
+  const all = JSON.parse(stored);
+  delete all[key];
   localStorage.setItem('playedAlerts', JSON.stringify(all));
 }
 
@@ -180,7 +188,49 @@ function getEventKey(e) {
   return `${id}:${startAt.toISOString()}`;
 }
 
+function isAlertDisabled(e) {
+  return Boolean(e?.alertasDesabilitados);
+}
+
+function updateLatestItemsAlertState(docId, disabled) {
+  if (!docId) return;
+  latestItems.forEach((item) => {
+    if (item.__docId === docId) {
+      item.alertasDesabilitados = disabled;
+    }
+  });
+}
+
+async function toggleAlertPreference(e, disabled) {
+  const docId = e?.__docId;
+  if (!docId) return false;
+
+  try {
+    await updateDoc(doc(db, "eventos", docId), {
+      alertasDesabilitados: disabled,
+    });
+    updateLatestItemsAlertState(docId, disabled);
+
+    if (!disabled) {
+      const eventKey = getEventKey({ ...latestItems.find((item) => item.__docId === docId), __docId: docId });
+      clearPlayedAlerts(eventKey);
+    }
+
+    const agenda = document.getElementById("agenda");
+    if (agenda && latestItems.length) {
+      renderItems(agenda, latestItems, new Date());
+    }
+    return true;
+  } catch (error) {
+    console.error("Erro ao atualizar preferência de alertas:", error);
+    alert("Não foi possível atualizar os alertas. Verifique as permissões do Firestore.");
+    return false;
+  }
+}
+
 function maybePlayAlert(e, diffMin) {
+  if (isAlertDisabled(e)) return;
+
   const key = getEventKey(e);
   let played = getPlayedAlerts(key);
 
@@ -194,16 +244,14 @@ function maybePlayAlert(e, diffMin) {
       if (alerta && typeof alerta.play === "function") {
         alerta.play();
         // Mostrar notificação para desabilitar próximos alertas (não-bloqueante)
-        showAlertModal(`Alerta tocado para ${threshold} minutos antes do evento "${e.titulo}". Desabilitar próximos alertas?`).then((disable) => {
+        showAlertModal(`Alerta tocado para ${threshold} minutos antes do evento "${e.titulo}". Desabilitar próximos alertas?`).then(async (disable) => {
           if (disable) {
-            // Adicionar todos os thresholds menores ao played (próximos alertas)
-            ALERT_THRESHOLDS.filter(t => t < threshold).forEach(t => played.add(t));
-            setPlayedAlerts(key, played);
-            // Re-renderizar para atualizar o badge imediatamente
-            const agenda = document.getElementById("agenda");
-            if (agenda && latestItems.length) {
-              renderItems(agenda, latestItems, new Date());
+            const alerta = document.getElementById("alerta");
+            if (alerta && typeof alerta.pause === "function") {
+              alerta.pause();
+              alerta.currentTime = 0;
             }
+            await toggleAlertPreference(e, true);
           }
         });
         setPlayedAlerts(key, played);
@@ -213,6 +261,8 @@ function maybePlayAlert(e, diffMin) {
 }
 
 function areAllAlertsDisabled(e) {
+  if (isAlertDisabled(e)) return true;
+
   const key = getEventKey(e);
   const played = getPlayedAlerts(key);
   return ALERT_THRESHOLDS.every(threshold => played.has(threshold));
@@ -265,14 +315,35 @@ function renderEventoDiv(e, agora) {
       primeiraColuna = `${dataObj.getDate().toString().padStart(2, "0")}/${(dataObj.getMonth()+1).toString().padStart(2, "0")}/${dataObj.getFullYear()}`;
     }
   }
-  const alertBadge = areAllAlertsDisabled(e) ? '<span class="alert-badge">🔇 Alertas Desabilitados</span>' : '';
+  const alertsDisabled = areAllAlertsDisabled(e);
+  const alertBadge = alertsDisabled ? '<span class="alert-badge">🔇 Alertas Desabilitados</span>' : '';
+  const actionButton = e.__docId && alertsDisabled
+    ? '<button class="alert-action-btn" type="button">Reativar alertas</button>'
+    : '';
+
   div.innerHTML = `
     <div>${primeiraColuna}</div>
     <div>${e.hora ?? ""}</div>
     <div>${e.sala ?? ""}</div>
-    <div>${e.titulo ?? ""} ${alertBadge}</div>
+    <div class="evento-titulo">
+      <div class="evento-title-text">${e.titulo ?? ""}</div>
+      <div class="alert-inline-row">
+        ${alertBadge}
+        ${actionButton}
+      </div>
+    </div>
     <div>${e.solicitante ?? ""}</div>
   `;
+
+  const actionBtn = div.querySelector('.alert-action-btn');
+  if (actionBtn) {
+    actionBtn.addEventListener('click', async (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      const shouldDisable = !alertsDisabled;
+      await toggleAlertPreference(e, shouldDisable);
+    });
+  }
 
   return div;
 }

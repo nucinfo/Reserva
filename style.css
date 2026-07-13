@@ -164,6 +164,27 @@ h1{
   border-color: rgba(255, 176, 32, 0.3) !important;
 }
 
+.evento-titulo {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.evento-title-text {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.alert-inline-row {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 10px;
+}
+
 .alert-badge {
   display: inline-block;
   background: rgba(255, 176, 32, 0.2);
@@ -173,9 +194,25 @@ h1{
   border-radius: 8px;
   font-size: 12px;
   font-weight: 600;
-  margin-left: 8px;
   white-space: nowrap;
   letter-spacing: 0.3px;
+  width: fit-content;
+}
+
+.alert-action-btn {
+  border: 1px solid rgba(79, 124, 255, 0.35);
+  background: rgba(79, 124, 255, 0.14);
+  color: var(--text);
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  width: fit-content;
+}
+
+.alert-action-btn:hover {
+  filter: brightness(1.1);
 }
 
 @keyframes piscando{
